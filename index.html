@@ -4,47 +4,52 @@
     <meta charset="UTF-8">
     <title>TaskTrack</title>
     <style>
-        body { font-family: Arial; padding: 20px; }
-        .task { background: #e0e0e0; padding: 10px; margin: 5px; border-radius: 5px; }
-        .loading { color: #666; }
-        .error { color: red; }
+        body { font-family: Arial; padding: 20px; max-width: 500px; margin: 0 auto; }
+        .task { background: #f0f0f0; padding: 15px; margin: 10px 0; border-radius: 8px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ddd; }
+        button { padding: 12px 24px; background: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; }
+        .loading { text-align: center; padding: 40px; color: #666; }
     </style>
 </head>
 <body>
-    <h1>📋 Мои задачи</h1>
-    <div id="loading" class="loading">Загружаю...</div>
+    <h1>📋 TaskTrack WebApp</h1>
+    
+    <!-- Форма добавления -->
+    <div>
+        <input type="text" id="newTask" placeholder="Новая задача...">
+        <button onclick="addTask()">➕ Добавить</button>
+    </div>
+    
+    <!-- Список задач -->
+    <div id="loading" class="loading">Загружаю задачи...</div>
     <div id="tasks"></div>
-    <div id="error" class="error"></div>
     
     <script>
-        // Получаем параметры
+        // Получаем параметры из URL
         const url = new URL(window.location.href);
         const userId = url.searchParams.get('user_id');
-        const API_URL = "http://77.239.105.153:8000";  // Твой сервер
+        const API_URL = "http://77.239.105.153:8000"; // Твой сервер
         
+        // Если нет user_id, показываем ошибку
         if (!userId) {
-            document.body.innerHTML = '<h2>Откройте через Telegram бота</h2>';
+            document.body.innerHTML = '<h2 style="color: red;">❌ Открой через Telegram бота!</h2>';
         } else {
             loadTasks();
         }
         
+        // Загрузить задачи
         async function loadTasks() {
             try {
                 console.log("Загружаю задачи для user_id:", userId);
                 
-                // Прямой запрос к API (теперь с CORS)
-                const response = await fetch(`${API_URL}/api/tasks?telegram_id=${userId}`, {
-                    method: 'GET',
-                    mode: 'cors',  // Включаем CORS режим
-                    headers: {
-                        'Accept': 'application/json',
-                    }
-                });
+                // Используем CORS proxy для обхода ограничений
+                const proxyUrl = 'https://corsproxy.io/?';
+                const targetUrl = `${API_URL}/api/tasks?telegram_id=${userId}`;
                 
-                console.log("Статус ответа:", response.status);
+                const response = await fetch(proxyUrl + encodeURIComponent(targetUrl));
                 
                 if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                    throw new Error(`Ошибка: ${response.status}`);
                 }
                 
                 const data = await response.json();
@@ -53,26 +58,68 @@
                 document.getElementById('loading').style.display = 'none';
                 
                 if (!data.tasks || data.tasks.length === 0) {
-                    document.getElementById('tasks').innerHTML = '<p>📭 Нет задач. Напишите боту!</p>';
+                    document.getElementById('tasks').innerHTML = '<p>📭 Нет задач. Добавь первую!</p>';
                 } else {
                     let html = '';
                     data.tasks.forEach(task => {
-                        html += `<div class="task"><b>${task.title}</b> (ID: ${task.id})</div>`;
+                        html += `
+                            <div class="task">
+                                <strong>${task.title}</strong>
+                                <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                                    ID: ${task.id} | Статус: ${task.status || 'активна'}
+                                </div>
+                            </div>
+                        `;
                     });
                     document.getElementById('tasks').innerHTML = html;
                 }
-                
             } catch (error) {
                 console.error("Ошибка:", error);
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('error').innerHTML = 
-                    `❌ Ошибка: ${error.message}<br>
-                     Проверь:<br>
-                     1. API сервер запущен? ${API_URL}/health<br>
-                     2. CORS настроен?<br>
-                     <button onclick="loadTasks()">Повторить</button>`;
+                document.getElementById('loading').innerHTML = `
+                    <div style="color: red;">
+                        ❌ Ошибка загрузки: ${error.message}
+                        <button onclick="loadTasks()">Повторить</button>
+                    </div>
+                `;
             }
         }
+        
+        // Добавить задачу
+        async function addTask() {
+            const input = document.getElementById('newTask');
+            const text = input.value.trim();
+            
+            if (!text) {
+                alert('Введите задачу!');
+                return;
+            }
+            
+            try {
+                // Используем CORS proxy
+                const proxyUrl = 'https://corsproxy.io/?';
+                const targetUrl = `${API_URL}/api/tasks?telegram_id=${userId}&title=${encodeURIComponent(text)}`;
+                
+                const response = await fetch(proxyUrl + encodeURIComponent(targetUrl), {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    input.value = '';
+                    loadTasks(); // Перезагрузить список
+                } else {
+                    alert('Ошибка сохранения');
+                }
+            } catch (error) {
+                alert('Ошибка сети: ' + error.message);
+            }
+        }
+        
+        // Добавить по Enter
+        document.getElementById('newTask').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addTask();
+            }
+        });
     </script>
 </body>
 </html>
