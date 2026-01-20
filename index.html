@@ -3,853 +3,638 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TaskTrack • Планировщик задач</title>
+    <title>TaskTrack - Управление задачами</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root {
-            --primary: #007aff;
-            --primary-dark: #0056cc;
-            --background: #f5f5f7;
-            --card: #ffffff;
-            --text: #1d1d1f;
-            --text-secondary: #8e8e93;
-            --border: #e5e5ea;
-            --error: #ff3b30;
-            --error-bg: rgba(255, 59, 48, 0.1);
-            --success: #34c759;
-            --success-bg: rgba(52, 199, 89, 0.1);
-            --warning: #ff9500;
-            --shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
-        }
-        
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: var(--background);
-            color: var(--text);
-            line-height: 1.6;
-            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            padding: 20px;
+            color: #333;
         }
-        
+
         .container {
-            max-width: 500px;
+            max-width: 800px;
             margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            min-height: 90vh;
         }
-        
+
         .header {
             text-align: center;
-            margin-bottom: 32px;
-            padding-bottom: 24px;
-            border-bottom: 1px solid var(--border);
+            margin-bottom: 30px;
         }
-        
+
         .header h1 {
-            color: var(--primary);
-            font-size: 32px;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
+            color: #667eea;
+            font-size: 28px;
+            margin-bottom: 10px;
         }
-        
+
         .header p {
-            color: var(--text-secondary);
+            color: #666;
             font-size: 16px;
         }
-        
-        .card {
-            background: var(--card);
-            border-radius: 20px;
-            padding: 24px;
-            margin-bottom: 20px;
-            box-shadow: var(--shadow);
-            transition: transform 0.2s, box-shadow 0.2s;
+
+        .section {
+            margin-bottom: 40px;
         }
-        
-        .card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-        }
-        
-        .card h2 {
+
+        .section-title {
             font-size: 20px;
+            color: #764ba2;
             margin-bottom: 20px;
-            color: var(--text);
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
             display: flex;
             align-items: center;
             gap: 10px;
         }
-        
-        .input-group {
-            display: flex;
-            gap: 12px;
+
+        .section-title::before {
+            content: '📋';
+            font-size: 24px;
+        }
+
+        .task-form {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
             margin-bottom: 20px;
         }
-        
-        input {
-            flex: 1;
-            padding: 16px 20px;
-            border: 2px solid var(--border);
-            border-radius: 14px;
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
             font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-control:focus {
             outline: none;
-            transition: border-color 0.2s;
+            border-color: #667eea;
         }
-        
-        input:focus {
-            border-color: var(--primary);
-        }
-        
-        input::placeholder {
-            color: var(--text-secondary);
-        }
-        
-        button {
-            background: var(--primary);
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            padding: 16px 28px;
-            border-radius: 14px;
+            padding: 12px 30px;
+            border-radius: 10px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.2s, transform 0.1s;
-            display: flex;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: inline-flex;
             align-items: center;
-            justify-content: center;
             gap: 8px;
         }
-        
-        button:hover {
-            background: var(--primary-dark);
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
         }
-        
-        button:active {
-            transform: scale(0.98);
+
+        .btn:active {
+            transform: translateY(0);
         }
-        
-        button:disabled {
-            background: var(--border);
-            cursor: not-allowed;
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
         }
-        
-        .task {
-            background: var(--card);
-            border-radius: 16px;
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .task-list {
+            list-style: none;
+        }
+
+        .task-item {
+            background: white;
+            border: 2px solid #e1e5e9;
+            border-radius: 15px;
             padding: 20px;
-            margin-bottom: 12px;
-            border-left: 4px solid var(--primary);
+            margin-bottom: 15px;
+            transition: all 0.3s;
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
-            animation: fadeIn 0.3s ease;
+            align-items: center;
         }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+
+        .task-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.1);
         }
-        
+
         .task-content {
             flex: 1;
         }
-        
+
         .task-title {
+            font-size: 18px;
             font-weight: 600;
-            font-size: 17px;
-            margin-bottom: 6px;
-            word-break: break-word;
+            color: #333;
+            margin-bottom: 5px;
         }
-        
-        .task-meta {
+
+        .task-description {
+            color: #666;
             font-size: 14px;
-            color: var(--text-secondary);
-            display: flex;
-            gap: 12px;
+            margin-bottom: 10px;
         }
-        
+
+        .task-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 12px;
+            color: #888;
+        }
+
+        .task-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-pending {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .status-in-progress {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .status-completed {
+            background: #d1fae5;
+            color: #059669;
+        }
+
         .task-actions {
             display: flex;
-            gap: 8px;
+            gap: 10px;
         }
-        
-        .icon-btn {
-            background: none;
-            border: none;
-            padding: 8px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 18px;
-            color: var(--text-secondary);
-            transition: background 0.2s;
-        }
-        
-        .icon-btn:hover {
-            background: var(--background);
-        }
-        
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: var(--text-secondary);
-        }
-        
-        .empty-state-icon {
-            font-size: 64px;
-            margin-bottom: 20px;
-            opacity: 0.5;
-        }
-        
-        .empty-state h3 {
-            font-size: 20px;
-            margin-bottom: 12px;
-            color: var(--text);
-        }
-        
-        .empty-state p {
-            font-size: 16px;
-            margin-bottom: 24px;
-        }
-        
-        .loading {
-            text-align: center;
-            padding: 60px 20px;
-        }
-        
-        .spinner {
+
+        .btn-icon {
             width: 40px;
             height: 40px;
-            border: 4px solid var(--border);
-            border-top-color: var(--primary);
             border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        .error {
-            background: var(--error-bg);
-            border: 1px solid var(--error);
-            color: var(--error);
-            padding: 20px;
-            border-radius: 16px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        
-        .error h3 {
-            margin-bottom: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            font-size: 18px;
         }
-        
-        .success {
-            background: var(--success-bg);
-            border: 1px solid var(--success);
-            color: var(--success);
-            padding: 16px;
-            border-radius: 16px;
+
+        .btn-edit {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .btn-delete {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .btn-edit:hover {
+            background: #1d4ed8;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background: #dc2626;
+            color: white;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 18px;
+        }
+
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        .error {
+            text-align: center;
+            padding: 30px;
+            background: #fee2e2;
+            border-radius: 15px;
+            color: #dc2626;
+            margin: 20px 0;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
             margin-bottom: 20px;
-            text-align: center;
-            animation: slideIn 0.3s ease;
         }
-        
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+
+        .empty-state-text {
+            font-size: 18px;
+            margin-bottom: 20px;
         }
-        
-        .debug-info {
-            background: var(--background);
-            border-radius: 12px;
-            padding: 16px;
-            margin-top: 24px;
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
             font-size: 12px;
-            color: var(--text-secondary);
-            border: 1px solid var(--border);
+            font-weight: 600;
+            margin-left: 10px;
         }
-        
-        .debug-info h4 {
-            margin-bottom: 8px;
-            color: var(--text);
-        }
-        
-        .stats {
+
+        .user-info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 30px;
             display: flex;
-            justify-content: space-around;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid var(--border);
+            justify-content: space-between;
+            align-items: center;
         }
-        
-        .stat {
-            text-align: center;
+
+        .user-id {
+            font-family: monospace;
+            background: rgba(255,255,255,0.2);
+            padding: 5px 10px;
+            border-radius: 10px;
+            font-size: 14px;
         }
-        
-        .stat-value {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--primary);
-        }
-        
-        .stat-label {
-            font-size: 12px;
-            color: var(--text-secondary);
-            margin-top: 4px;
-        }
-        
+
         @media (max-width: 600px) {
-            body {
-                padding: 16px;
-            }
-            
             .container {
-                max-width: 100%;
-            }
-            
-            .card {
                 padding: 20px;
             }
             
-            .input-group {
+            .task-item {
                 flex-direction: column;
+                gap: 15px;
             }
             
-            button {
-                width: 100%;
+            .task-actions {
+                align-self: flex-end;
             }
-        }
-        
-        .theme-toggle {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: var(--card);
-            border: 2px solid var(--border);
-            border-radius: 50%;
-            width: 44px;
-            height: 44px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 20px;
-            transition: all 0.2s;
-            z-index: 1000;
-        }
-        
-        .theme-toggle:hover {
-            transform: rotate(30deg);
         }
     </style>
 </head>
 <body>
-    <button class="theme-toggle" id="themeToggle" title="Сменить тему">
-        🌓
-    </button>
-    
     <div class="container">
         <div class="header">
-            <h1>
-                <span>📋</span>
-                TaskTrack
-            </h1>
-            <p>Ваш персональный планировщик задач</p>
+            <h1>📝 TaskTrack</h1>
+            <p>Управляй задачами прямо из Telegram</p>
         </div>
-        
-        <div id="app">
-            <!-- Приложение загрузится здесь -->
+
+        <div id="userInfo" class="user-info" style="display: none;">
+            <div>
+                <strong>👤 Пользователь:</strong>
+                <span id="userName"></span>
+            </div>
+            <div class="user-id">
+                ID: <span id="userId"></span>
+            </div>
         </div>
-        
-        <div id="debugInfo" class="debug-info" style="display: none;">
-            <h4>Отладочная информация</h4>
-            <div id="debugContent"></div>
+
+        <div class="section">
+            <div class="section-title">➕ Новая задача</div>
+            <div class="task-form">
+                <div class="form-group">
+                    <label for="taskTitle">Заголовок</label>
+                    <input type="text" id="taskTitle" class="form-control" placeholder="Что нужно сделать?" required>
+                </div>
+                <div class="form-group">
+                    <label for="taskDescription">Описание (необязательно)</label>
+                    <textarea id="taskDescription" class="form-control" rows="3" placeholder="Подробности..."></textarea>
+                </div>
+                <button onclick="createTask()" class="btn btn-success">
+                    ✅ Добавить
+                </button>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">📋 Мои задачи</div>
+            <div id="taskList" class="loading">
+                Загрузка задач...
+            </div>
         </div>
     </div>
-    
+
     <script>
-        // ========== КОНФИГУРАЦИЯ ==========
-        const CONFIG = {
-            API_URL: "http://77.239.105.153:8000", // Твой API сервер
-            DEBUG: false // Включить отладку
-        };
-        
-        // ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
-        const tg = window.Telegram?.WebApp;
-        let userId = null;
+        // Конфигурация
+        const API_BASE_URL = 'http://77.239.105.153:8000';
+        let telegramId = null;
         let tasks = [];
-        let darkMode = false;
-        
-        // ========== ПОЛУЧЕНИЕ USER_ID ==========
-        function getUserId() {
-            // 1. Из параметров URL
-            const urlParams = new URLSearchParams(window.location.search);
-            let id = urlParams.get('user_id');
-            
-            // 2. Из Telegram WebApp
-            if (!id && tg?.initDataUnsafe?.user?.id) {
-                id = tg.initDataUnsafe.user.id;
-            }
-            
-            // 3. Для отладки (закомментируй в продакшене)
-            if (!id && CONFIG.DEBUG) {
-                id = 281398927; // Твой ID для теста
-            }
-            
-            return id;
-        }
-        
-        // ========== ОСНОВНАЯ ИНИЦИАЛИЗАЦИЯ ==========
-        async function initApp() {
-            console.log("🚀 Инициализация TaskTrack WebApp...");
-            
-            // Получаем user_id
-            userId = getUserId();
-            
-            if (!userId) {
-                showErrorScreen();
-                return;
-            }
-            
-            console.log("✅ User ID:", userId);
-            
-            // Инициализируем Telegram WebApp
-            if (tg) {
+
+        // Инициализация Telegram WebApp
+        function initTelegramWebApp() {
+            if (window.Telegram && window.Telegram.WebApp) {
+                const tg = window.Telegram.WebApp;
                 tg.expand();
-                tg.MainButton.setText('🔄 Обновить').show();
-                tg.MainButton.onClick(loadTasks);
                 tg.ready();
-                console.log("✅ Telegram WebApp инициализирован");
-            }
-            
-            // Показываем основной интерфейс
-            showMainScreen();
-            
-            // Загружаем задачи
-            await loadTasks();
-            
-            // Показываем отладочную информацию
-            if (CONFIG.DEBUG) {
-                showDebugInfo();
-            }
-            
-            console.log("✅ TaskTrack WebApp готов!");
-        }
-        
-        // ========== ЭКРАНЫ ==========
-        function showErrorScreen() {
-            document.getElementById('app').innerHTML = `
-                <div class="card">
-                    <div class="error">
-                        <h3>
-                            <span>❌</span>
-                            Ошибка доступа
-                        </h3>
-                        <p>Откройте это приложение через Telegram бота.</p>
-                        <p style="margin-top: 16px; font-size: 14px;">
-                            Используйте команду <strong>/start</strong> в боте и нажмите кнопку.
-                        </p>
-                        <button onclick="location.reload()" style="margin-top: 20px;">
-                            🔄 Обновить страницу
-                        </button>
-                    </div>
-                </div>
-            `;
-        }
-        
-        function showLoadingScreen() {
-            document.getElementById('app').innerHTML = `
-                <div class="loading">
-                    <div class="spinner"></div>
-                    <p>Загружаем ваш планировщик...</p>
-                </div>
-            `;
-        }
-        
-        function showMainScreen() {
-            document.getElementById('app').innerHTML = `
-                <!-- Форма добавления -->
-                <div class="card">
-                    <h2>
-                        <span>➕</span>
-                        Новая задача
-                    </h2>
-                    <div class="input-group">
-                        <input 
-                            type="text" 
-                            id="taskInput" 
-                            placeholder="Что нужно сделать?"
-                            maxlength="200"
-                        >
-                        <button id="addButton" onclick="addTask()">
-                            <span>✅</span>
-                            Добавить
-                        </button>
-                    </div>
-                    <div id="addStatus"></div>
-                </div>
                 
-                <!-- Список задач -->
-                <div class="card">
-                    <h2>
-                        <span>📋</span>
-                        Мои задачи
-                        <span id="taskCount" style="font-size: 14px; color: var(--text-secondary); margin-left: auto;">
-                            (0)
-                        </span>
-                    </h2>
-                    <div id="tasksContainer">
-                        <div class="loading">
-                            <div class="spinner"></div>
-                            <p>Загружаем задачи...</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Статистика -->
-                <div id="statsContainer" style="display: none;">
-                    <div class="stats">
-                        <div class="stat">
-                            <div class="stat-value" id="totalTasks">0</div>
-                            <div class="stat-label">Всего задач</div>
-                        </div>
-                        <div class="stat">
-                            <div class="stat-value" id="activeTasks">0</div>
-                            <div class="stat-label">Активных</div>
-                        </div>
-                        <div class="stat">
-                            <div class="stat-value" id="completedTasks">0</div>
-                            <div class="stat-label">Выполненных</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            // Настройка обработчиков
-            const taskInput = document.getElementById('taskInput');
-            taskInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    addTask();
-                }
-            });
-            
-            taskInput.focus();
-        }
-        
-        // ========== РАБОТА С API ==========
-        async function makeRequest(endpoint, method = 'GET', data = null) {
-            const url = `${CONFIG.API_URL}${endpoint}`;
-            const options = {
-                method: method,
-                mode: 'cors',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
-            };
-            
-            if (data) {
-                if (method === 'GET') {
-                    const params = new URLSearchParams(data).toString();
-                    endpoint += `?${params}`;
+                // Получаем данные пользователя
+                const user = tg.initDataUnsafe?.user;
+                if (user) {
+                    telegramId = user.id;
+                    document.getElementById('userName').textContent = 
+                        user.first_name + (user.last_name ? ' ' + user.last_name : '');
+                    document.getElementById('userId').textContent = telegramId;
+                    document.getElementById('userInfo').style.display = 'flex';
+                    
+                    // Загружаем задачи
+                    loadTasks();
                 } else {
-                    options.body = JSON.stringify(data);
+                    // Для тестирования без Telegram
+                    telegramId = 281398927;
+                    document.getElementById('userId').textContent = '281398927 (тест)';
+                    document.getElementById('userName').textContent = 'Тестовый пользователь';
+                    document.getElementById('userInfo').style.display = 'flex';
+                    loadTasks();
                 }
+            } else {
+                // Режим разработки без Telegram
+                console.log('Telegram WebApp не обнаружен, используем тестовый режим');
+                telegramId = 281398927;
+                document.getElementById('userId').textContent = '281398927 (тест)';
+                document.getElementById('userName').textContent = 'Тестовый пользователь';
+                document.getElementById('userInfo').style.display = 'flex';
+                loadTasks();
             }
+        }
+
+        // Загрузка задач
+        async function loadTasks() {
+            const taskList = document.getElementById('taskList');
             
             try {
-                console.log(`📡 ${method} ${url}${endpoint.includes('?') ? '' : endpoint}`);
-                const response = await fetch(`${CONFIG.API_URL}${endpoint}`, options);
+                taskList.innerHTML = '<div class="loading">Загрузка задач...</div>';
+                
+                const response = await fetch(`${API_BASE_URL}/api/tasks?telegram_id=${telegramId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
                 
                 if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 
-                const result = await response.json();
-                console.log('✅ Ответ API:', result);
-                return result;
+                tasks = await response.json();
+                displayTasks();
                 
             } catch (error) {
-                console.error('❌ Ошибка запроса:', error);
-                throw error;
-            }
-        }
-        
-        // ========== ЗАГРУЗКА ЗАДАЧ ==========
-        async function loadTasks() {
-            try {
-                document.getElementById('tasksContainer').innerHTML = `
-                    <div class="loading">
-                        <div class="spinner"></div>
-                        <p>Загружаем задачи...</p>
-                    </div>
-                `;
-                
-                const data = await makeRequest(`/api/tasks?telegram_id=${userId}`);
-                tasks = data.tasks || [];
-                
-                renderTasks();
-                updateStats();
-                showStatus('✅ Задачи обновлены', 'success');
-                
-            } catch (error) {
-                console.error('Ошибка загрузки задач:', error);
-                document.getElementById('tasksContainer').innerHTML = `
+                console.error('Ошибка загрузки:', error);
+                taskList.innerHTML = `
                     <div class="error">
-                        <h3>
-                            <span>❌</span>
-                            Ошибка загрузки
-                        </h3>
-                        <p>${error.message}</p>
-                        <button onclick="loadTasks()" style="margin-top: 12px;">
+                        ❌ Ошибка загрузки<br>
+                        ${error.message}
+                        <br><br>
+                        <button onclick="loadTasks()" class="btn">
                             🔄 Повторить попытку
                         </button>
                     </div>
                 `;
             }
         }
-        
-        // ========== ОТОБРАЖЕНИЕ ЗАДАЧ ==========
-        function renderTasks() {
-            const container = document.getElementById('tasksContainer');
+
+        // Отображение задач
+        function displayTasks() {
+            const taskList = document.getElementById('taskList');
             
             if (!tasks || tasks.length === 0) {
-                container.innerHTML = `
+                taskList.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-state-icon">📭</div>
-                        <h3>Нет задач</h3>
-                        <p>Добавьте первую задачу в поле выше!</p>
+                        <div class="empty-state-text">У вас пока нет задач</div>
+                        <div style="color: #999; font-size: 14px;">Добавьте первую задачу выше</div>
                     </div>
                 `;
-                document.getElementById('statsContainer').style.display = 'none';
                 return;
             }
             
-            let html = '';
+            let html = `<div style="margin-bottom: 20px; color: #666;">
+                        Всего задач: <strong>${tasks.length}</strong>
+                    </div>
+                    <ul class="task-list">`;
             
             tasks.forEach(task => {
-                const isDone = task.status === 'done';
-                const statusIcon = isDone ? '✅' : '⏳';
-                const statusText = isDone ? 'Выполнена' : 'Активна';
-                const textStyle = isDone ? 'style="text-decoration: line-through; opacity: 0.7;"' : '';
+                const statusText = getStatusText(task.status);
+                const statusClass = getStatusClass(task.status);
+                const created = new Date(task.created_at).toLocaleDateString('ru-RU');
                 
                 html += `
-                    <div class="task">
+                    <li class="task-item" id="task-${task.id}">
                         <div class="task-content">
-                            <div class="task-title" ${textStyle}>
-                                ${task.title}
-                            </div>
+                            <div class="task-title">${escapeHtml(task.title)}</div>
+                            ${task.description ? `<div class="task-description">${escapeHtml(task.description)}</div>` : ''}
                             <div class="task-meta">
-                                <span>${statusIcon} ${statusText}</span>
-                                <span>🆔 ${task.id}</span>
-                                <span>📅 ${formatDate(task.created_at)}</span>
+                                <span>📅 ${created}</span>
+                                <span class="task-status ${statusClass}">${statusText}</span>
                             </div>
                         </div>
                         <div class="task-actions">
-                            <button class="icon-btn" onclick="toggleTask(${task.id}, ${isDone})" title="${isDone ? 'Вернуть' : 'Выполнить'}">
-                                ${isDone ? '↩️' : '✅'}
+                            <button onclick="toggleTaskStatus(${task.id}, '${task.status}')" 
+                                    class="btn-icon btn-edit">
+                                ${task.status === 'completed' ? '↩️' : '✅'}
                             </button>
-                            <button class="icon-btn" onclick="deleteTask(${task.id})" title="Удалить">
-                                🗑️
-                            </button>
+                            <button onclick="deleteTask(${task.id})" 
+                                    class="btn-icon btn-delete">🗑️</button>
                         </div>
-                    </div>
+                    </li>
                 `;
             });
             
-            container.innerHTML = html;
-            document.getElementById('taskCount').textContent = `(${tasks.length})`;
-            document.getElementById('statsContainer').style.display = 'flex';
+            html += '</ul>';
+            taskList.innerHTML = html;
         }
-        
-        // ========== ДОБАВЛЕНИЕ ЗАДАЧИ ==========
-        async function addTask() {
-            const input = document.getElementById('taskInput');
-            const button = document.getElementById('addButton');
-            const text = input.value.trim();
+
+        // Создание задачи
+        async function createTask() {
+            const titleInput = document.getElementById('taskTitle');
+            const descriptionInput = document.getElementById('taskDescription');
             
-            if (!text) {
-                showStatus('Введите текст задачи', 'error');
-                input.focus();
+            const title = titleInput.value.trim();
+            if (!title) {
+                alert('Введите заголовок задачи');
                 return;
             }
             
-            if (text.length > 200) {
-                showStatus('Задача слишком длинная (макс. 200 символов)', 'error');
-                return;
-            }
-            
-            // Блокируем кнопку
-            button.disabled = true;
-            button.innerHTML = '<span>⏳</span> Добавляем...';
+            const taskData = {
+                telegram_id: telegramId,
+                title: title,
+                description: descriptionInput.value.trim() || null
+            };
             
             try {
-                const data = await makeRequest('/api/tasks', 'POST', {
-                    telegram_id: userId,
-                    title: text
+                const response = await fetch(`${API_BASE_URL}/api/tasks`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(taskData)
                 });
                 
-                // Очищаем поле и фокус
-                input.value = '';
-                input.focus();
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
                 
-                // Показываем успех
-                showStatus(`✅ Задача добавлена: "${text}"`, 'success');
+                // Очищаем форму
+                titleInput.value = '';
+                descriptionInput.value = '';
                 
-                // Перезагружаем список
-                await loadTasks();
+                // Обновляем список
+                loadTasks();
                 
             } catch (error) {
-                showStatus(`❌ Ошибка: ${error.message}`, 'error');
-            } finally {
-                // Разблокируем кнопку
-                button.disabled = false;
-                button.innerHTML = '<span>✅</span> Добавить';
+                console.error('Ошибка создания:', error);
+                alert(`❌ Ошибка: ${error.message}`);
             }
         }
-        
-        // ========== УПРАВЛЕНИЕ ЗАДАЧАМИ ==========
-        async function toggleTask(taskId, currentStatus) {
+
+        // Изменение статуса задачи
+        async function toggleTaskStatus(taskId, currentStatus) {
+            const newStatus = currentStatus === 'completed' ? 'pending' : 'completed';
+            
             try {
-                const newStatus = currentStatus ? 'active' : 'done';
-                await makeRequest(`/api/tasks/${taskId}`, 'PUT', {
-                    status: newStatus
+                const response = await fetch(`${API_BASE_URL}/api/tasks/${taskId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        status: newStatus
+                    })
                 });
                 
-                showStatus(`✅ Задача ${currentStatus ? 'возвращена' : 'выполнена'}`, 'success');
-                await loadTasks();
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                // Обновляем список
+                loadTasks();
                 
             } catch (error) {
-                showStatus(`❌ Ошибка: ${error.message}`, 'error');
+                console.error('Ошибка обновления:', error);
+                alert(`❌ Ошибка: ${error.message}`);
             }
         }
-        
+
+        // Удаление задачи
         async function deleteTask(taskId) {
             if (!confirm('Удалить эту задачу?')) {
                 return;
             }
             
             try {
-                await makeRequest(`/api/tasks/${taskId}`, 'DELETE');
-                showStatus('✅ Задача удалена', 'success');
-                await loadTasks();
+                const response = await fetch(`${API_BASE_URL}/api/tasks/${taskId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                // Удаляем из DOM
+                const taskElement = document.getElementById(`task-${taskId}`);
+                if (taskElement) {
+                    taskElement.style.opacity = '0';
+                    taskElement.style.transform = 'translateX(-20px)';
+                    setTimeout(() => {
+                        loadTasks();
+                    }, 300);
+                } else {
+                    loadTasks();
+                }
                 
             } catch (error) {
-                showStatus(`❌ Ошибка: ${error.message}`, 'error');
+                console.error('Ошибка удаления:', error);
+                alert(`❌ Ошибка: ${error.message}`);
             }
         }
-        
-        // ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
-        function showStatus(message, type = 'info') {
-            const statusEl = document.getElementById('addStatus');
-            
-            if (type === 'success') {
-                statusEl.innerHTML = `
-                    <div class="success">
-                        ${message}
-                    </div>
-                `;
-                
-                // Автоматически скрываем через 3 секунды
-                setTimeout(() => {
-                    statusEl.innerHTML = '';
-                }, 3000);
-                
-            } else if (type === 'error') {
-                statusEl.innerHTML = `
-                    <div class="error">
-                        ${message}
-                    </div>
-                `;
-            } else {
-                statusEl.innerHTML = `<div>${message}</div>`;
-            }
-        }
-        
-        function updateStats() {
-            const total = tasks.length;
-            const active = tasks.filter(t => t.status !== 'done').length;
-            const completed = total - active;
-            
-            document.getElementById('totalTasks').textContent = total;
-            document.getElementById('activeTasks').textContent = active;
-            document.getElementById('completedTasks').textContent = completed;
-        }
-        
-        function formatDate(dateString) {
-            if (!dateString) return '—';
-            
-            const date = new Date(dateString);
-            return date.toLocaleDateString('ru-RU', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-            });
-        }
-        
-        function showDebugInfo() {
-            document.getElementById('debugInfo').style.display = 'block';
-            document.getElementById('debugContent').innerHTML = `
-                <div><strong>User ID:</strong> ${userId}</div>
-                <div><strong>API URL:</strong> ${CONFIG.API_URL}</div>
-                <div><strong>Telegram WebApp:</strong> ${tg ? 'Да' : 'Нет'}</div>
-                <div><strong>Задач:</strong> ${tasks.length}</div>
-                <div><strong>URL:</strong> ${window.location.href}</div>
-            `;
-        }
-        
-        function toggleTheme() {
-            darkMode = !darkMode;
-            
-            if (darkMode) {
-                document.documentElement.style.setProperty('--background', '#1c1c1e');
-                document.documentElement.style.setProperty('--card', '#2c2c2e');
-                document.documentElement.style.setProperty('--text', '#ffffff');
-                document.documentElement.style.setProperty('--text-secondary', '#8e8e93');
-                document.documentElement.style.setProperty('--border', '#38383a');
-                document.getElementById('themeToggle').textContent = '🌞';
-            } else {
-                document.documentElement.style.setProperty('--background', '#f5f5f7');
-                document.documentElement.style.setProperty('--card', '#ffffff');
-                document.documentElement.style.setProperty('--text', '#1d1d1f');
-                document.documentElement.style.setProperty('--text-secondary', '#8e8e93');
-                document.documentElement.style.setProperty('--border', '#e5e5ea');
-                document.getElementById('themeToggle').textContent = '🌓';
-            }
-        }
-        
-        // ========== ЗАПУСК ПРИЛОЖЕНИЯ ==========
-        document.addEventListener('DOMContentLoaded', () => {
-            // Настройка переключения темы
-            document.getElementById('themeToggle').addEventListener('click', toggleTheme);
-            
-            // Запуск приложения
-            initApp();
-            
-            // Для отладки в консоли
-            window.tasktrack = {
-                reload: loadTasks,
-                getTasks: () => tasks,
-                getUserId: () => userId,
-                addTestTask: () => {
-                    document.getElementById('taskInput').value = 'Тестовая задача ' + Date.now();
-                    addTask();
-                }
+
+        // Вспомогательные функции
+        function getStatusText(status) {
+            const statusMap = {
+                'pending': 'В ожидании',
+                'in_progress': 'В работе',
+                'completed': 'Выполнено'
             };
-            
-            console.log('🎮 Доступны команды отладки: tasktrack.reload(), tasktrack.addTestTask()');
+            return statusMap[status] || status;
+        }
+
+        function getStatusClass(status) {
+            const classMap = {
+                'pending': 'status-pending',
+                'in_progress': 'status-in-progress',
+                'completed': 'status-completed'
+            };
+            return classMap[status] || 'status-pending';
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', initTelegramWebApp);
+
+        // Обработка нажатия Enter в поле заголовка
+        document.getElementById('taskTitle').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                createTask();
+            }
         });
     </script>
 </body>
