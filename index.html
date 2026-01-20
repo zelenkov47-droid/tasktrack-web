@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>TaskTrack</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        .task { background: #e0e0e0; padding: 10px; margin: 5px; border-radius: 5px; }
+        .loading { color: #666; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>📋 Мои задачи</h1>
+    <div id="loading" class="loading">Загружаю...</div>
+    <div id="tasks"></div>
+    <div id="error" class="error"></div>
+    
+    <script>
+        // Получаем параметры
+        const url = new URL(window.location.href);
+        const userId = url.searchParams.get('user_id');
+        const API_URL = "http://77.239.105.153:8000";  // Твой сервер
+        
+        if (!userId) {
+            document.body.innerHTML = '<h2>Откройте через Telegram бота</h2>';
+        } else {
+            loadTasks();
+        }
+        
+        async function loadTasks() {
+            try {
+                console.log("Загружаю задачи для user_id:", userId);
+                
+                // Прямой запрос к API (теперь с CORS)
+                const response = await fetch(`${API_URL}/api/tasks?telegram_id=${userId}`, {
+                    method: 'GET',
+                    mode: 'cors',  // Включаем CORS режим
+                    headers: {
+                        'Accept': 'application/json',
+                    }
+                });
+                
+                console.log("Статус ответа:", response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                }
+                
+                const data = await response.json();
+                console.log("Данные:", data);
+                
+                document.getElementById('loading').style.display = 'none';
+                
+                if (!data.tasks || data.tasks.length === 0) {
+                    document.getElementById('tasks').innerHTML = '<p>📭 Нет задач. Напишите боту!</p>';
+                } else {
+                    let html = '';
+                    data.tasks.forEach(task => {
+                        html += `<div class="task"><b>${task.title}</b> (ID: ${task.id})</div>`;
+                    });
+                    document.getElementById('tasks').innerHTML = html;
+                }
+                
+            } catch (error) {
+                console.error("Ошибка:", error);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').innerHTML = 
+                    `❌ Ошибка: ${error.message}<br>
+                     Проверь:<br>
+                     1. API сервер запущен? ${API_URL}/health<br>
+                     2. CORS настроен?<br>
+                     <button onclick="loadTasks()">Повторить</button>`;
+            }
+        }
+    </script>
+</body>
+</html>
