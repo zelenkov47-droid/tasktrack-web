@@ -2,83 +2,256 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>TaskTrack</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskTrack • Планировщик</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: Arial; padding: 20px; max-width: 500px; margin: 0 auto; }
-        .task { background: #f0f0f0; padding: 15px; margin: 10px 0; border-radius: 8px; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ddd; }
-        button { padding: 12px 24px; background: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; }
-        .loading { text-align: center; padding: 40px; color: #666; }
+        :root {
+            --primary: #007aff;
+            --background: #f5f5f7;
+            --card: #ffffff;
+            --text: #1d1d1f;
+            --border: #e5e5ea;
+            --error: #ff3b30;
+            --success: #34c759;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            padding: 20px;
+            max-width: 500px;
+            margin: 0 auto;
+            background: var(--background);
+            color: var(--text);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        h1 {
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+        
+        .card {
+            background: var(--card);
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .task {
+            background: var(--card);
+            padding: 16px;
+            margin-bottom: 12px;
+            border-radius: 12px;
+            border-left: 4px solid var(--primary);
+        }
+        
+        input {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+        
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 12px;
+        }
+        
+        .error {
+            background: rgba(255, 59, 48, 0.1);
+            border: 1px solid var(--error);
+            color: var(--error);
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #8e8e93;
+        }
+        
+        .success {
+            background: rgba(52, 199, 89, 0.1);
+            border: 1px solid var(--success);
+            color: var(--success);
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
-    <h1>📋 TaskTrack WebApp</h1>
-    
-    <!-- Форма добавления -->
-    <div>
-        <input type="text" id="newTask" placeholder="Новая задача...">
-        <button onclick="addTask()">➕ Добавить</button>
+    <div class="header">
+        <h1>📋 TaskTrack</h1>
+        <p>Ваш персональный планировщик задач</p>
     </div>
     
-    <!-- Список задач -->
-    <div id="loading" class="loading">Загружаю задачи...</div>
-    <div id="tasks"></div>
+    <div id="app">
+        <div class="loading" id="loading">
+            <div style="font-size: 48px; margin-bottom: 20px;">⏳</div>
+            <div>Загружаем ваш планировщик...</div>
+        </div>
+    </div>
     
     <script>
-        // Получаем параметры из URL
-        const url = new URL(window.location.href);
-        const userId = url.searchParams.get('user_id');
-        const API_URL = "http://77.239.105.153:8000"; // Твой сервер
+        // Инициализация Telegram WebApp
+        const tg = window.Telegram?.WebApp;
+        let userId = null;
+        const API_URL = "http://77.239.105.153:8000";
         
-        // Если нет user_id, показываем ошибку
-        if (!userId) {
-            document.body.innerHTML = '<h2 style="color: red;">❌ Открой через Telegram бота!</h2>';
-        } else {
+        // Функция для получения user_id
+        function getUserId() {
+            // Способ 1: Из параметров URL
+            const urlParams = new URLSearchParams(window.location.search);
+            userId = urlParams.get('user_id');
+            
+            // Способ 2: Из Telegram WebApp
+            if (!userId && tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                userId = tg.initDataUnsafe.user.id;
+            }
+            
+            // Способ 3: Для отладки - тестовый ID
+            if (!userId && window.location.hostname === 'localhost') {
+                userId = 281398927; // Твой ID для теста
+            }
+            
+            return userId;
+        }
+        
+        // Инициализация приложения
+        function initApp() {
+            userId = getUserId();
+            
+            if (!userId) {
+                showError("Откройте приложение через Telegram бота (команда /start)");
+                return;
+            }
+            
+            console.log("User ID:", userId);
+            
+            // Инициализируем Telegram WebApp
+            if (tg) {
+                tg.expand();
+                tg.MainButton.setText('Обновить').show();
+                tg.MainButton.onClick(() => loadTasks());
+                tg.ready();
+            }
+            
+            // Показываем основной интерфейс
+            showMainInterface();
             loadTasks();
+        }
+        
+        // Показать основной интерфейс
+        function showMainInterface() {
+            document.getElementById('app').innerHTML = `
+                <div class="card">
+                    <h3 style="margin-bottom: 16px;">➕ Новая задача</h3>
+                    <input type="text" id="newTask" placeholder="Что нужно сделать?">
+                    <button onclick="addTask()">✅ Добавить задачу</button>
+                </div>
+                
+                <div id="tasksContainer">
+                    <h3 style="margin-bottom: 16px;">📋 Мои задачи</h3>
+                    <div id="tasks" class="loading">Загружаем задачи...</div>
+                </div>
+                
+                <div id="status"></div>
+            `;
+            
+            // Добавляем обработчик Enter
+            document.getElementById('newTask').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addTask();
+                }
+            });
+        }
+        
+        // Показать ошибку
+        function showError(message) {
+            document.getElementById('app').innerHTML = `
+                <div class="error">
+                    <h3 style="margin-bottom: 12px;">❌ Ошибка</h3>
+                    <p>${message}</p>
+                    <p style="margin-top: 20px; font-size: 14px;">
+                        Ваш User ID: <code>${userId || 'не найден'}</code><br>
+                        API: ${API_URL}
+                    </p>
+                </div>
+            `;
         }
         
         // Загрузить задачи
         async function loadTasks() {
             try {
-                console.log("Загружаю задачи для user_id:", userId);
+                document.getElementById('tasks').innerHTML = '<div class="loading">Загружаем...</div>';
                 
-                // Используем CORS proxy для обхода ограничений
+                // Используем CORS proxy
                 const proxyUrl = 'https://corsproxy.io/?';
                 const targetUrl = `${API_URL}/api/tasks?telegram_id=${userId}`;
                 
                 const response = await fetch(proxyUrl + encodeURIComponent(targetUrl));
                 
                 if (!response.ok) {
-                    throw new Error(`Ошибка: ${response.status}`);
+                    throw new Error(`HTTP ${response.status}`);
                 }
                 
                 const data = await response.json();
-                console.log("Данные:", data);
-                
-                document.getElementById('loading').style.display = 'none';
                 
                 if (!data.tasks || data.tasks.length === 0) {
-                    document.getElementById('tasks').innerHTML = '<p>📭 Нет задач. Добавь первую!</p>';
-                } else {
-                    let html = '';
-                    data.tasks.forEach(task => {
-                        html += `
-                            <div class="task">
-                                <strong>${task.title}</strong>
-                                <div style="font-size: 12px; color: #666; margin-top: 5px;">
-                                    ID: ${task.id} | Статус: ${task.status || 'активна'}
-                                </div>
-                            </div>
-                        `;
-                    });
-                    document.getElementById('tasks').innerHTML = html;
+                    document.getElementById('tasks').innerHTML = `
+                        <div class="task" style="text-align: center; color: #8e8e93;">
+                            <div style="font-size: 48px; margin-bottom: 16px;">📭</div>
+                            <div style="font-size: 18px; margin-bottom: 8px;">Нет задач</div>
+                            <div>Добавьте первую задачу в поле выше!</div>
+                        </div>
+                    `;
+                    return;
                 }
+                
+                let html = '';
+                data.tasks.forEach(task => {
+                    html += `
+                        <div class="task">
+                            <div style="font-weight: 600; margin-bottom: 8px;">${task.title}</div>
+                            <div style="font-size: 14px; color: #8e8e93;">
+                                Статус: ${task.status || 'активна'} • ID: ${task.id}
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                document.getElementById('tasks').innerHTML = html;
+                showStatus(`✅ Загружено ${data.tasks.length} задач`, 'success');
+                
             } catch (error) {
-                console.error("Ошибка:", error);
-                document.getElementById('loading').innerHTML = `
-                    <div style="color: red;">
-                        ❌ Ошибка загрузки: ${error.message}
-                        <button onclick="loadTasks()">Повторить</button>
+                console.error('Ошибка загрузки задач:', error);
+                document.getElementById('tasks').innerHTML = `
+                    <div class="error">
+                        <p>❌ Ошибка загрузки задач</p>
+                        <p style="font-size: 14px;">${error.message}</p>
+                        <button onclick="loadTasks()" style="margin-top: 12px;">🔄 Повторить</button>
                     </div>
                 `;
             }
@@ -90,11 +263,13 @@
             const text = input.value.trim();
             
             if (!text) {
-                alert('Введите задачу!');
+                showStatus('Введите текст задачи!', 'error');
                 return;
             }
             
             try {
+                showStatus('Сохраняем задачу...');
+                
                 // Используем CORS proxy
                 const proxyUrl = 'https://corsproxy.io/?';
                 const targetUrl = `${API_URL}/api/tasks?telegram_id=${userId}&title=${encodeURIComponent(text)}`;
@@ -105,21 +280,41 @@
                 
                 if (response.ok) {
                     input.value = '';
-                    loadTasks(); // Перезагрузить список
+                    showStatus(`✅ Задача добавлена: "${text}"`, 'success');
+                    loadTasks();
                 } else {
-                    alert('Ошибка сохранения');
+                    throw new Error(`HTTP ${response.status}`);
                 }
+                
             } catch (error) {
-                alert('Ошибка сети: ' + error.message);
+                console.error('Ошибка добавления задачи:', error);
+                showStatus(`❌ Ошибка: ${error.message}`, 'error');
             }
         }
         
-        // Добавить по Enter
-        document.getElementById('newTask').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                addTask();
+        // Показать статус
+        function showStatus(message, type = 'info') {
+            const statusEl = document.getElementById('status');
+            
+            if (type === 'success') {
+                statusEl.innerHTML = `<div class="success">${message}</div>`;
+                setTimeout(() => {
+                    statusEl.innerHTML = '';
+                }, 3000);
+            } else if (type === 'error') {
+                statusEl.innerHTML = `<div class="error">${message}</div>`;
+            } else {
+                statusEl.innerHTML = `<div>${message}</div>`;
             }
-        });
+        }
+        
+        // Запускаем приложение при загрузке
+        document.addEventListener('DOMContentLoaded', initApp);
+        
+        // Для отладки
+        console.log('TaskTrack WebApp loaded');
+        console.log('Location:', window.location.href);
+        console.log('URL params:', new URLSearchParams(window.location.search).toString());
     </script>
 </body>
 </html>
